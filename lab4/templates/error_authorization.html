@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    {% if not blankLogin %}
+    <p>Неверно введены логин или пароль! </p>
+    {% endif %}
+    {% if blankLogin %}
+    <p>Пожалуйста введите данные аккаунта! </p>
+    {% endif %}
+    <br>
+    <a href="/login/">К авторизации</a>
+
+
+</head>
+<body>
+</body>
+</html>
