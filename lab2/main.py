@@ -1,5 +1,6 @@
 import requests
 import telebot
+import datetime
 from dotenv import load_dotenv
 import os
 
@@ -26,23 +27,23 @@ CITIES = {
 }
 
 
+@bot.message_handler(commands=['start'])
+def command_start(msg):
+    keyboard = telebot.types.ReplyKeyboardMarkup()
+    keyboard.row('Текущий прогноз', 'Недельный прогноз')
+    bot.send_message(msg.chat.id, 'Привет! С помощью данного бота можно узнать актуальный прогноз погоды.',
+                     reply_markup=keyboard)
+
+
+@bot.message_handler(content_types=['text'])
+def response_with_text(msg):
+    if msg.text == 'Текущий прогноз':
+        call_request(msg, 'weather')
+    if msg.text == 'Недельный прогноз':
+        call_request(msg, 'forecast')
+
+
 # <-------------------------------------------------------------------------------------------------------------->
-def session():
-    global CITIES
-
-    @bot.message_handler(commands=['start'])
-    def command_start(msg):
-        keyboard = telebot.types.ReplyKeyboardMarkup()
-        keyboard.row('Текущий прогноз', 'Недельный прогноз')
-        bot.send_message(msg.chat.id, 'Привет! С помощью данного бота можно узнать актуальный прогноз погоды.',
-                         reply_markup=keyboard)
-
-    @bot.message_handler(content_types=['text'])
-    def response_with_text(msg):
-        if msg.text == 'Текущий прогноз':
-            call_request(msg, 'weather')
-        if msg.text == 'Недельный прогноз':
-            call_request(msg, 'forecast')
 
 
 def call_request(msg, call_type):
@@ -76,10 +77,11 @@ def request_data(CITY_NAME, APPID, REQ_TYPE):
 
 
 def show_result_current(data, s_city, msg):
-    content = ("Город:" + ' ' + str(s_city)) + '\n' + ("Погодные условия:" + ' ' + str(data['weather'][0]['description'])) +\
-              '\n' +\
-              ("Температура:" + ' ' + str(data['main']['temp'])) + '\n' +\
-              ("Минимальная температура:" + ' ' + str(data['main']['temp_min'])) + '\n' +\
+    content = ("Город:" + ' ' + str(s_city)) + '\n' + (
+            "Погодные условия:" + ' ' + str(data['weather'][0]['description'])) + \
+              '\n' + \
+              ("Температура:" + ' ' + str(data['main']['temp'])) + '\n' + \
+              ("Минимальная температура:" + ' ' + str(data['main']['temp_min'])) + '\n' + \
               ("Максимальная температура" + ' ' + str(data['main']['temp_max'])) + '\n'
     bot.send_message(msg.chat.id, content)
 
@@ -87,14 +89,18 @@ def show_result_current(data, s_city, msg):
 def show_result_forecast(data, s_city, msg):
     content1 = ("Прогноз погоды на неделю в городе " + str(s_city) + " :") + '\n'
     bot.send_message(msg.chat.id, content1)
+    dateunix = []
 
     for i in data['list']:
-        content2 = ''
-        content2 = "Дата <" + str(i['dt_txt']) + "> \r\nТемпература <" + str('{0:+3.0f}'.format(i['main']['temp'])) + \
-                   "> \r\nПогодные условия <" + str(i['weather'][0]['description']) + "> \r\nСкорость ветра <" + \
-                   str(i['wind']['speed']) + "> \r\nВидимость <" + str(i['visibility']) + ">" + \
-                   "\n____________________________"
-        bot.send_message(msg.chat.id, content2)
+        if (datetime.datetime.fromtimestamp(int(i['dt'])).strftime('%d')) not in dateunix:
+            content2 = ''
+            dateunix.append(datetime.datetime.fromtimestamp(int(i['dt'])).strftime('%d'))
+            content2 = "Дата <" + str(i['dt_txt']) + "> \r\nТемпература <" + str(
+                '{0:+3.0f}'.format(i['main']['temp'])) + \
+                       "> \r\nПогодные условия <" + str(i['weather'][0]['description']) + "> \r\nСкорость ветра <" + \
+                       str(i['wind']['speed']) + "> \r\nВидимость <" + str(i['visibility']) + ">" + \
+                       "\n____________________________"
+            bot.send_message(msg.chat.id, content2)
 
 
 def gen_city_choice():
@@ -117,5 +123,4 @@ def gen_city_choice():
     return markup
 
 
-session()
 bot.polling()
