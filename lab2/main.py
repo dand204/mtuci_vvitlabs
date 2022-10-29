@@ -1,7 +1,17 @@
-from time import sleep
 import requests
+import telebot
+from dotenv import load_dotenv
+import os
 
-APP_KEY = "!!! API KEY !!!"
+load_dotenv("./.env")
+owm_key = os.getenv('OPENWEATHERMAP_API_KEY')
+telegram_key = os.getenv('TELEGRAM_API_KEY')
+
+try:
+    bot = telebot.TeleBot(telegram_key)
+except:
+    print("Telegram bot is not started! ")
+    exit()
 
 CITIES = {
     1: "Moscow,RU",
@@ -19,33 +29,43 @@ CITIES = {
 # <-------------------------------------------------------------------------------------------------------------->
 def session():
     global CITIES
+
+    @bot.message_handler(commands=['start'])
+    def command_start(msg):
+        keyboard = telebot.types.ReplyKeyboardMarkup()
+        keyboard.row('Текущий прогноз', 'Недельный прогноз')
+        bot.send_message(msg.chat.id, 'Привет! С помощью данного бота можно узнать актуальный прогноз погоды.',
+                         reply_markup=keyboard)
+
+    @bot.message_handler(content_types=['text'])
+    def response_with_text(msg):
+        if msg.text == 'Текущий прогноз':
+            call_request(msg, 'weather')
+        if msg.text == 'Недельный прогноз':
+            call_request(msg, 'forecast')
+
+
+def call_request(msg, call_type):
+    bot.send_message(msg.chat.id, 'Укажите город для которого хотите посмотреть погоду',
+                     reply_markup=gen_city_choice())
     try:
-        CITY_NAME = CITIES.get(choose_city())
+        def received(callbackid):
+            chosen_city = callbackid
+            CITY_NAME = CITIES.get(chosen_city)
+            data_current = request_data(str(CITY_NAME), owm_key, call_type)
+            if call_type == 'weather':
+                show_result_current(data_current, CITY_NAME, msg)
+            if call_type == 'forecast':
+                show_result_forecast(data_current, CITY_NAME, msg)
 
-        data_current = request_data(str(CITY_NAME), APP_KEY, 'weather')
-        show_result_current(data_current, CITY_NAME)
-
-        data_forecast = request_data(str(CITY_NAME), APP_KEY, 'forecast')
-        show_result_forecast(data_forecast, CITY_NAME)
-
-    except ValueError:
-        print("Неверно указан номер города.")
-        sleep(2)
-        session()
+        call_request.recieved = received
     except KeyError:
-        print("Не удалось получить данные о погоде")
+        bot.send_message(msg.chat.id, 'Произошла ошибка!')
 
 
-def choose_city():
-    print(
-        "Доступные города: \n 1) Москва \n 2) Санкт-Петербург \n 3) Казань \n 4) Самара \n 5) Екатиринбург \n 6) "
-        "Новосибирск \n 7) Хабаровск \n 8) Владивосток")
-
-    CITY = int(input("Укажите номер города: "))
-    if 0 < CITY <= len(CITIES):
-        return CITY
-    else:
-        raise ValueError
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+    return call_request.recieved(int(call.data))
 
 
 def request_data(CITY_NAME, APPID, REQ_TYPE):
@@ -55,25 +75,47 @@ def request_data(CITY_NAME, APPID, REQ_TYPE):
     return data
 
 
-def show_result_current(data, s_city):
-    print("Город:", s_city)
-    print("Погодные условия:", data['weather'][0]['description'])
-    print("Температура:", data['main']['temp'])
-    print("Минимальная температура:", data['main']['temp_min'])
-    print("Максимальная температура", data['main']['temp_max'])
+def show_result_current(data, s_city, msg):
+    content = ("Город:" + ' ' + str(s_city)) + '\n' + ("Погодные условия:" + ' ' + str(data['weather'][0]['description'])) +\
+              '\n' +\
+              ("Температура:" + ' ' + str(data['main']['temp'])) + '\n' +\
+              ("Минимальная температура:" + ' ' + str(data['main']['temp_min'])) + '\n' +\
+              ("Максимальная температура" + ' ' + str(data['main']['temp_max'])) + '\n'
+    bot.send_message(msg.chat.id, content)
 
 
-def show_result_forecast(data, s_city):
-    print('Нажмите ENTER чтобы вывести недельный прогноз')
-    if input() != 0:
-        print("Прогноз погоды на неделю в городе " + s_city + " :")
-        for i in data['list']:
-            print("Дата <", i['dt_txt'], "> \r\nТемпература <",
-                  '{0:+3.0f}'.format(i['main']['temp']), "> \r\nПогодные условия <",
-                  i['weather'][0]['description'], "> \r\nСкорость ветра <",
-                  i['wind']['speed'], "> \r\nВидимость <",
-                  i['visibility'], ">")
-            print("____________________________")
+def show_result_forecast(data, s_city, msg):
+    content1 = ("Прогноз погоды на неделю в городе " + str(s_city) + " :") + '\n'
+    bot.send_message(msg.chat.id, content1)
+
+    for i in data['list']:
+        content2 = ''
+        content2 = "Дата <" + str(i['dt_txt']) + "> \r\nТемпература <" + str('{0:+3.0f}'.format(i['main']['temp'])) + \
+                   "> \r\nПогодные условия <" + str(i['weather'][0]['description']) + "> \r\nСкорость ветра <" + \
+                   str(i['wind']['speed']) + "> \r\nВидимость <" + str(i['visibility']) + ">" + \
+                   "\n____________________________"
+        bot.send_message(msg.chat.id, content2)
+
+
+def gen_city_choice():
+    markup = telebot.types.InlineKeyboardMarkup()
+    markup.row_width = 2
+    context = ''
+    for ev_city in CITIES.keys():
+        context += "telebot.types.InlineKeyboardButton(" + str(CITIES.get(ev_city)) + ", callback_data=" + \
+                   str(ev_city) + ','
+
+    markup.add(telebot.types.InlineKeyboardButton("Москва", callback_data='1'),
+               telebot.types.InlineKeyboardButton("Санкт-Петербург", callback_data='2'),
+               telebot.types.InlineKeyboardButton("Казань", callback_data='3'),
+               telebot.types.InlineKeyboardButton("Самара", callback_data='4'),
+               telebot.types.InlineKeyboardButton("Екатеринбург", callback_data='5'),
+               telebot.types.InlineKeyboardButton("Новосибирск", callback_data='6'),
+               telebot.types.InlineKeyboardButton("Хабаровск", callback_data='7'),
+               telebot.types.InlineKeyboardButton("Владивосток", callback_data='8')
+               )
+    return markup
 
 
 session()
+bot.polling()
