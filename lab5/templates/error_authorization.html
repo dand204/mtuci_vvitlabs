@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    {% if AuthErr %}
+    <p>Неверно введены логин или пароль! </p>
+    {% endif %}
+    {% if blankLogin %}
+    <p>Пожалуйста введите данные аккаунта! </p>
+    {% endif %}
+    {% if RegErr %}
+    <p>Пожалуйста заполните все поля! </p>
+    <br>
+    <a href="/registration/">Вернуться к регистрации</a>
+    {% endif %}
+    {% if RegUsrAlExist %}
+    <p>Пользователь с данным логином уже существует! </p>
+    <br>
+    <a href="/registration/">Вернуться к регистрации</a>
+    {% endif %}
+    {% if not RegErr and not RegUsrAlExist %}
+    <br>
+    <a href="/login/">К авторизации</a>
+    {% endif %}
+
+
+</head>
+<body>
+</body>
+</html>
