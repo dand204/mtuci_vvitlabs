@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Table</title>
+</head>
+<body>
+<h1>Рейтинг студентов кафедры КииБ</h1>
+<table>
+  <thead>
+    <th>#</th>
+    <th>Полное имя</th>
+    <th>Группа</th>
+    <th>Рейтинг</th>
+  </thead>
+  <tbody>
+    {% for ev in range(data | length) %}
+        <tr>
+          <td>{{ data[ev][0] }}</td>
+          <td>{{ data[ev][1] }}</td>
+          <td>{{ data[ev][3] }}</td>
+          <td>{{ data[ev][4] }}</td>
+        </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</body>
