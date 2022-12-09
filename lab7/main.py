@@ -46,7 +46,7 @@ def BotHandler(bot, psql):
         keyboard.row("На Cегодня", "На Завтра")
         keyboard.row("На Неделю", "На Следующую Неделю")
         keyboard.row("О Боте")
-        bot.send_message(message.chat.id, 'Привет! Хочешь узнать свежую информацию о МТУСИ?', reply_markup=keyboard)
+        bot.send_message(message.chat.id, 'Привет! Хочешь узнать свежую информацию о расписании?', reply_markup=keyboard)
 
     @bot.message_handler(commands=['help'])
     def AnswerHelpCommand(message):
@@ -55,7 +55,7 @@ def BotHandler(bot, psql):
     @bot.message_handler(content_types=['text'])
     def AnswerWith(message):
         if message.text == "О Боте":
-            bot.send_message(message.chat.id, 'Тогда тебе сюда - https://mtuci.ru/')
+            bot.send_message(message.chat.id, 'Бот умеет выводить расписание пар для группы БИН2205')
         if message.text == "На Cегодня":
             RaspHandler(bot, psql, message, (datetime.date.today()))
         if message.text == "На Завтра":
@@ -73,10 +73,9 @@ def BotHandler(bot, psql):
 
 def RaspHandler(bot, psql, msgpool, target):
     flag = (type(target) is list)
-
     date_period = [target]
 
-    print(date_period)
+
     try:
         if not flag:
             psql.execute("SELECT * FROM public.timetable WHERE date=%s ORDER BY pair_numb;", date_period)
@@ -84,16 +83,30 @@ def RaspHandler(bot, psql, msgpool, target):
             psql.execute("SELECT * FROM public.timetable WHERE date = ANY(%s) ORDER BY (date, pair_numb)", date_period)
 
         records = list(psql.fetchall())
-        print(records)
+
     except Exception as e:
         print("Cannot execute data\n", e)
-    msg_buffer = ''
-    for i in range(len(records)):
-        msg_buffer += str(records[i][2]) + ". " + str(records[i][1]) + \
-                      "\n    " + str(records[i][5]) + \
-                      "\n    Кабинет " + str(records[i][3]) + " " + str(records[i][4] + "\n\n")
-    msg = "Расписание на " + str(datetime.datetime.now())[:10] + ":\n" + msg_buffer
-    bot.send_message(msgpool.chat.id, msg)
+    if len(records) != 0:
+        message_box = []
+        msg_buffer = ''
+        msg_buffer += "Расписание на " + str((records[0][6]).strftime('%d/%m/%Y')) + ":\n"
+        for i in range(len(records)):
+            try:
+                if int((records[i][6]).strftime('%d')) > int((records[i - 1][6]).strftime('%d')):
+                    message_box.append(msg_buffer)
+                    msg_buffer = ''
+                    msg_buffer += "Расписание на " + str((records[i][6]).strftime('%d/%m/%Y')) + ":\n"
+
+            except Exception:
+                pass
+            msg_buffer += str(records[i][2]) + ". " + str(records[i][1]) + \
+                          "\n    " + str(records[i][5]) + \
+                          "\n    Кабинет " + str(records[i][3]) + " (" + str(records[i][4] + ")\n")
+        message_box.append(msg_buffer)
+        for mn in message_box:
+            bot.send_message(msgpool.chat.id, mn)
+    else:
+        bot.send_message(msgpool.chat.id, "На этот день расписание не найдено!")
 
 
 def Service(db_env_keys, tg_key):
