@@ -1,0 +1,165 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 15.1
+-- Dumped by pg_dump version 15.1
+
+-- Started on 2022-12-09 16:53:48
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 215 (class 1259 OID 16449)
+-- Name: subject; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.subject (
+    id bigint NOT NULL,
+    name character varying NOT NULL
+);
+
+
+ALTER TABLE public.subject OWNER TO postgres;
+
+--
+-- TOC entry 216 (class 1259 OID 16458)
+-- Name: teacher; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.teacher (
+    id bigint NOT NULL,
+    full_name character varying NOT NULL,
+    chair character varying NOT NULL,
+    subject character varying NOT NULL
+);
+
+
+ALTER TABLE public.teacher OWNER TO postgres;
+
+--
+-- TOC entry 214 (class 1259 OID 16442)
+-- Name: timetable; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.timetable (
+    id bigint NOT NULL,
+    subject character varying NOT NULL,
+    pair_numb integer NOT NULL,
+    cabinet_numb character varying,
+    cabinet_location character varying,
+    pair_type character varying,
+    date date
+);
+
+
+ALTER TABLE public.timetable OWNER TO postgres;
+
+--
+-- TOC entry 3332 (class 0 OID 16449)
+-- Dependencies: 215
+-- Data for Name: subject; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.subject (id, name) FROM stdin;
+\.
+
+
+--
+-- TOC entry 3333 (class 0 OID 16458)
+-- Dependencies: 216
+-- Data for Name: teacher; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.teacher (id, full_name, chair, subject) FROM stdin;
+\.
+
+
+--
+-- TOC entry 3331 (class 0 OID 16442)
+-- Dependencies: 214
+-- Data for Name: timetable; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.timetable (id, subject, pair_numb, cabinet_numb, cabinet_location, pair_type, date) FROM stdin;
+10	Высшая математика	1	314	ОП	Практика	2022-12-09
+13	Введение в информационные технологии	2	Л-203	А	Лаб.Работа	2022-12-13
+6	История	2	318	ОП	Лекция	2022-12-12
+7	Высшая математика	4	312	ОП	Лекция	2022-12-16
+8	Английский язык	2	406	ОП	Практика	2022-12-14
+9	Физика	3	324	ОП	Лаб.Работа	2022-12-14
+5	Русский язык	3	305	ОП	Лекция	2022-12-15
+11	История	2	314	ОП	Практика	2022-12-14
+1	Высшая математика	2	314	ОП	Практика	2022-12-12
+3	Введение в информационные технологии	4	504	ОП	Практика	2022-12-16
+12	Английский язык	3	224	ОП	Практика	2022-12-15
+4	Русский язык	1	305	ОП	Практика	2022-12-09
+2	Физика	3	420	ОП	Лекция	2022-12-15
+14	Введение в профессию	2	402	А	Практика	2022-12-13
+\.
+
+
+--
+-- TOC entry 3183 (class 2606 OID 16455)
+-- Name: subject subject_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.subject
+    ADD CONSTRAINT subject_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3185 (class 2606 OID 16457)
+-- Name: subject subject_uniq; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.subject
+    ADD CONSTRAINT subject_uniq UNIQUE (name);
+
+
+--
+-- TOC entry 3187 (class 2606 OID 16464)
+-- Name: teacher teacher_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.teacher
+    ADD CONSTRAINT teacher_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3181 (class 2606 OID 16448)
+-- Name: timetable timetable_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.timetable
+    ADD CONSTRAINT timetable_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3188 (class 2606 OID 16465)
+-- Name: teacher subject_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.teacher
+    ADD CONSTRAINT subject_fkey FOREIGN KEY (subject) REFERENCES public.subject(name) NOT VALID;
+
+
+-- Completed on 2022-12-09 16:53:48
+
+--
+-- PostgreSQL database dump complete
+--
+
